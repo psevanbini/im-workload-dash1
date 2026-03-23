@@ -3,324 +3,415 @@ Version 1: Implementation Workload capacity dashboard that looks at deals, proje
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ParentSquare IM Dashboard v2</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --ps-green: #85ad33; /* cite: 112 */
-            --ps-dark-green: #618025; /* cite: 113 */
-            --ps-blue: #7bbaf0; /* cite: 114 */
-            --ps-gold: #f2b001; /* cite: 115 */
-            --ps-light-green: #e5f1d4; /* cite: 117 */
-            --ps-dark-gray: #444444; /* cite: 118 */
-            --ps-light-gray: #f7f8f8; /* cite: 119 */
-            --warning-red: #d9534f;
-        }
+  <meta charset="UTF-8" />
+  <title>ParentSquare IM Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ps-green: #85ad33;
+      --ps-dark-green: #618025;
+      --ps-blue: #7bbaf0;
+      --ps-gold: #f2b001;
+      --ps-light-green: #e5f1d4;
+      --ps-light-gray: #f7f8f8;
+      --ps-dark-gray: #444444;
+      --ps-red: #d9534f;
+      --ps-overload-bg: #fff0f0;
+    }
 
-        body {
-            font-family: 'Montserrat', Arial, sans-serif; /* cite: 40-44 */
-            background-color: var(--ps-light-gray);
-            color: var(--ps-dark-gray);
-            margin: 0;
-            padding: 20px;
-        }
+    * { box-sizing: border-box; font-family: "Montserrat", Arial, sans-serif; }
+    body { margin: 0; background: var(--ps-light-gray); color: var(--ps-dark-gray); }
+    .container { max-width: 1450px; margin: 0 auto; padding: 24px; }
 
-        /* Header Branding */
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 2px solid var(--ps-green);
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-        }
+    header { display: flex; align-items: flex-start; gap: 20px; margin-bottom: 30px; height: 80px; }
+    .logo img { height: 60px; width: auto; }
+    .header-text h1 { color: var(--ps-green); margin: 0; font-size: 24px; font-weight: 700; line-height: 1.2; }
+    .header-text p { margin: 4px 0 0; color: #666; font-size: 16px; font-weight: 600; }
 
-        .header h1 {
-            color: var(--ps-green); /* cite: 23 */
-            font-size: 24pt; /* cite: 24 */
-            margin: 0;
-        }
+    .tabs { display: flex; gap: 24px; border-bottom: 2px solid #ddd; margin-bottom: 24px; }
+    .tab { padding-bottom: 12px; cursor: pointer; font-weight: 600; color: #666; position: relative; }
+    .tab.active { color: var(--ps-green); border-bottom: 4px solid var(--ps-green); }
+    .notification-badge { position: absolute; top: -5px; right: -12px; background: var(--ps-red); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; }
 
-        /* Role Switcher (Simulated Login) */
-        .role-selector {
-            background: white;
-            padding: 10px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
+    .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); border-top: 4px solid var(--ps-green); }
+    .card .value { font-size: 28px; font-weight: 700; color: var(--ps-dark-green); }
+    .card .label { font-size: 13px; color: #666; margin-top: 4px; font-weight: 600; }
+    .risk-breakdown { font-size: 11px; color: #888; font-weight: 700; margin-top: 2px; }
 
-        /* Navigation Tabs */
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
+    .summary-cap-bar { height: 6px; background: #eee; border-radius: 3px; margin-top: 8px; overflow: hidden; }
+    .summary-cap-fill { height: 100%; transition: width 0.5s; }
 
-        .tab-btn {
-            padding: 12px 24px;
-            border: none;
-            background: #ddd;
-            cursor: pointer;
-            font-weight: 600;
-            border-radius: 5px;
-            transition: 0.3s;
-        }
+    .view { display: none; }
+    .view.active { display: block; }
 
-        .tab-btn.active {
-            background-color: var(--ps-green);
-            color: white;
-        }
+    table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: visible; }
+    th { background: var(--ps-green); color: white; padding: 14px; text-align: left; font-size: 12px; text-transform: uppercase; }
+    td { padding: 12px; border-bottom: 1px solid #eee; font-size: 12px; vertical-align: middle; }
+    .stage-group-header { background: var(--ps-light-green); font-weight: 700; color: var(--ps-dark-green); padding: 8px 12px; font-size: 11px; text-transform: uppercase; }
+    .stage-spacer { height: 15px; background: var(--ps-light-gray); }
 
-        /* Dashboard Components */
-        .card {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-        }
+    .pill { padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; display: inline-block; text-transform: capitalize; }
+    .red { background: #f2dede; color: #a94442; border: 1px solid #ebccd1; }
+    .yellow { background: #fcf8e3; color: #8a6d3b; border: 1px solid #faebcc; }
+    .green { background: #dff0d8; color: #3c763d; border: 1px solid #d6e9c6; }
 
-        .status-pill {
-            padding: 4px 12px;
-            border-radius: 15px;
-            font-size: 0.8em;
-            font-weight: bold;
-            color: white;
-        }
+    .adj-wrapper { position: relative; }
+    .adj-btn { background: #fff; border: 1px solid #ccc; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px; width: 100%; text-align: left; display: flex; justify-content: space-between; }
+    .adj-display { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 4px; font-size: 10px; font-weight: 600; color: var(--ps-blue); }
+    .adj-display.vertical { flex-direction: column; }
+    .adj-dropdown { display: none; position: absolute; left: 0; background: white; border: 1px solid #ddd; padding: 10px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 220px; border-radius: 4px; }
+    .adj-dropdown.active { display: block; }
+    .adj-dropdown.open-up { bottom: 100%; top: auto; margin-bottom: 5px; }
 
-        .health-blue { background-color: var(--ps-blue); } /* cite: user prompt */
-        .health-green { background-color: var(--ps-green); }
-        .health-yellow { background-color: var(--ps-gold); }
-        .health-red { background-color: var(--warning-red); }
+    .controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 15px; }
+    .btn-action { background: white; border: 1px solid #ddd; padding: 8px 16px; cursor: pointer; font-size: 12px; font-weight: 600; border-radius: 4px; transition: 0.2s; }
+    .btn-action.active { background: var(--ps-green) !important; color: white !important; border-color: var(--ps-green) !important; }
 
-        /* Warnings */
-        .burnout-alert {
-            background-color: #f2dede;
-            border-left: 6px solid var(--warning-red);
-            padding: 10px;
-            margin-bottom: 10px;
-            color: #a94442;
-        }
+    .tier-section-header { background: #eef1f5; padding: 10px 20px; margin: 20px 0 10px 0; border-radius: 4px; font-weight: 700; border-left: 5px solid var(--ps-dark-green); }
+    .im-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .im-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); border-left: 5px solid var(--ps-green); position: relative; }
+    .im-card.overload { background-color: var(--ps-overload-bg); }
+    .im-card.off-rotation { border-left-color: #ccc; opacity: 0.7; }
 
-        .velocity-alert {
-            background-color: var(--ps-light-green);
-            border-left: 6px solid var(--ps-gold); /* cite: user prompt */
-            padding: 10px;
-            margin-bottom: 10px;
-        }
+    .im-list-table { width: 100%; background: white; border-radius: 8px; border-collapse: collapse; }
+    .im-list-table th { background: var(--ps-dark-gray); color: white; padding: 10px; font-size: 11px; }
+    .im-list-table td { padding: 10px; border-bottom: 1px solid #eee; }
+    .im-list-table tr.overload { background-color: var(--ps-overload-bg); }
+    .status-dot { height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-right: 5px; }
 
-        /* Strategy Notes Box */
-        .strategy-note {
-            background-color: var(--ps-light-green); /* cite: 57 */
-            border-left: 6px solid var(--ps-green); /* cite: 64 */
-            padding: 15px;
-            font-style: italic;
-        }
+    .capacity-container { margin: 25px 0 15px 0; position: relative; }
+    .progress-track { height: 14px; background: #eee; border-radius: 7px; position: relative; overflow: visible; }
+    .progress-fill { height: 100%; transition: width 0.6s ease; border-radius: 7px; max-width: 100%; }
+    .marker { position: absolute; top: 0px; width: 1px; height: 25px; background: #bbb; z-index: 2; }
+    .marker-label { position: absolute; top: -22px; font-size: 8px; font-weight: 700; color: #777; transform: translateX(-50%); text-align: center; }
+    
+    textarea { width: 100%; height: 60px; border: 1px solid #ddd; border-radius: 4px; font-size: 11px; padding: 8px; resize: none; margin-top: 10px; }
+    .btn-save, .btn-rotation { background: var(--ps-blue); color: white; border: none; padding: 4px 12px; border-radius: 4px; font-size: 10px; font-weight: 700; cursor: pointer; }
+    .btn-rotation.off { background: #999; }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-        }
+    .review-card { background: var(--ps-light-green); border-left: 6pt solid var(--ps-green); padding: 25px; border-radius: 8px; margin-bottom: 20px; }
+    .assign-select { padding: 8px; border-radius: 4px; border: 1px solid #ccc; font-size: 12px; width: 450px; margin: 10px 0; }
 
-        th {
-            background-color: var(--ps-green); /* cite: 78 */
-            color: white;
-            text-align: left;
-            padding: 12px;
-        }
-
-        td {
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-        }
-
-        /* Graph Simulation */
-        .chart-container {
-            display: flex;
-            align-items: flex-end;
-            gap: 20px;
-            height: 200px;
-            padding: 20px;
-            background: #f9f9f9;
-            border-bottom: 2px solid #444;
-        }
-
-        .bar {
-            width: 40px;
-            background-color: var(--ps-green);
-            position: relative;
-            transition: height 0.5s;
-        }
-
-        .bar-label {
-            position: absolute;
-            bottom: -25px;
-            font-size: 10px;
-            width: 100%;
-            text-align: center;
-        }
-
-        footer {
-            margin-top: 50px;
-            text-align: center;
-            font-size: 10pt; /* cite: 90 */
-            color: var(--ps-dark-gray); /* cite: 91 */
-        }
-    </style>
+    footer { text-align: center; padding: 40px; color: var(--ps-dark-gray); font-size: 10px; font-weight: 600; }
+  </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>Implementation Manager Dashboard</h1>
-        <div class="role-selector">
-            <label>View As: </label>
-            <select id="roleSelect" onchange="switchRole()">
-                <option value="ic">Individual Contributor (IC)</option>
-                <option value="lead">Team Lead</option>
-                <option value="manager">Manager</option>
-            </select>
+<div class="container">
+  <header>
+    <div class="logo"><img src="logo.png" alt="ParentSquare"></div>
+    <div class="header-text">
+      <h1>Implementation Manager Deal Dashboard</h1>
+      <p>Workload Visibility & Deal Assignment Support</p>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <div id="tab-my" class="tab active" onclick="switchView('my-book')">My Book of Business</div>
+    <div id="tab-territory" class="tab" onclick="switchView('territory')">Territory Overview</div>
+    <div id="tab-team" class="tab" onclick="switchView('total-team')">
+      Total Team Workload
+      <div class="notification-badge" id="main-badge">2</div>
+    </div>
+  </div>
+
+  <div class="summary">
+    <div class="card"><div id="stat-deals" class="value">0</div><div class="label">Active Deals</div></div>
+    <div class="card"><div class="value"><span id="stat-points">0</span> <span style="font-size: 14px; font-weight: 400;">(out of <span id="max-pts">0</span>)</span></div><div class="label">Total Points</div></div>
+    <div class="card"><div id="stat-cap" class="value">0%</div><div class="label">Capacity Used <span id="tier-context"></span></div><div class="summary-cap-bar"><div id="summary-cap-fill" class="summary-cap-fill"></div></div></div>
+    <div class="card"><div id="stat-risk" class="value">0</div><div class="label">At-Risk Deals</div><div id="risk-breakdown-text" class="risk-breakdown">0Y / 0R</div></div>
+  </div>
+
+  <div id="view-my-book" class="view active">
+    <table>
+      <thead><tr><th>Stage</th><th>Customer</th><th>Size</th><th>SIS</th><th>Health</th><th>Adjustments</th><th>Total Points</th></tr></thead>
+      <tbody id="my-deals-body"></tbody>
+    </table>
+  </div>
+
+  <div id="view-territory" class="view">
+    <div class="controls"><h2 style="color:var(--ps-dark-green); margin:0;">Territory Load Overview (EST)</h2>
+      <div class="control-group">
+        <button id="btn-sort-tier-territory" class="btn-action" onclick="toggleTierSort()">Sort Tier ↑↓</button>
+        <button id="btn-grid-territory" class="btn-action" onclick="setLayout('grid')">Card View</button>
+        <button id="btn-list-territory" class="btn-action active" onclick="setLayout('list')">List View</button>
+      </div>
+    </div>
+    <div id="territory-display"></div>
+  </div>
+
+  <div id="view-total-team" class="view">
+    <div class="tabs" style="font-size:12px; margin-bottom:15px; border-bottom:1px solid #eee;">
+      <div id="sub-team-roster" class="tab active" onclick="switchSubTab('roster')">Full Team Roster</div>
+      <div id="sub-team-strat" class="tab" onclick="switchSubTab('strat')">
+        Deal Assignment Review
+        <div class="notification-badge" id="sub-badge">2</div>
+      </div>
+    </div>
+    
+    <div id="view-roster">
+      <div class="controls">
+        <h2 style="color:var(--ps-dark-green); margin:0;">Total Team Visibility</h2>
+        <div class="control-group">
+          <button id="filter-all" class="btn-action active" onclick="setTZFilter('all')">All</button>
+          <button id="filter-est" class="btn-action" onclick="setTZFilter('EST')">EST</button>
+          <button id="filter-cst" class="btn-action" onclick="setTZFilter('CST')">CST</button>
+          <button id="filter-pst" class="btn-action" onclick="setTZFilter('PST')">PST</button>
+          <span style="border-left:1px solid #ccc; margin:0 5px;"></span>
+          <button id="btn-sort-tier-team" class="btn-action" onclick="toggleTierSort()">Sort Tier ↑↓</button>
+          <button id="btn-grid-team" class="btn-action" onclick="setLayout('grid')">Card View</button>
+          <button id="btn-list-team" class="btn-action active" onclick="setLayout('list')">List View</button>
         </div>
+      </div>
+      <div id="team-display"></div>
     </div>
 
-    <div id="navContainer" class="tabs">
+    <div id="view-strat" style="display:none;">
+      <div id="overload-container"></div>
+      <div id="review-container"></div>
+    </div>
+  </div>
+
+  <footer>© 2026 ParentSquare • Implementation Manager Dashboard • Evan Tambini</footer>
+</div>
+
+<script>
+const MPC_VALUES = { "T1": 70, "T2": 90, "T3": 120, "T4": 120, "T5": 90 };
+const SIS_PTS = { "PowerSchool": 3, "Infinite Campus": 2, "Aeries": 2, "Skyward SFTP": 2, "Clever": 2, "RenWeb/FACTS": 1 };
+const SIZE_PTS = { "Strategic": 4, "Large": 2, "Medium": 3, "Small": 1 };
+const HEALTH_PTS = { "green": 0, "yellow": 1, "red": 2 };
+const STAGES = ["Inbound", "Kickoff", "Setup", "Feature Enablement", "Platform Ready", "Monitor", "End of Implementation", "On Hold", "Stalled"];
+const ADJ_OPTIONS = ["Extended Launch", "Proof of Concept", "Pilots", "DSAs/DUAs/DPAs", "DOEs", "New Hire"];
+
+let currentTab = 'my-book';
+let currentLayout = 'list';
+let currentTZFilter = 'all';
+let tierSortDir = 'desc';
+
+// My Book: 12 Examples (LOCKED)
+let myDeals = Array.from({length: 12}, (_, i) => {
+    const savedAdj = localStorage.getItem(`adj_my_deal_${i}`);
+    return {
+      id: i, stage: STAGES[i % STAGES.length], name: `Customer ${String.fromCharCode(65+i)}`, 
+      size: i % 3 === 0 ? "Strategic" : (i % 3 === 1 ? "Medium" : "Large"), 
+      sis: i % 2 === 0 ? "PowerSchool" : "Infinite Campus", 
+      health: i % 4 === 0 ? "yellow" : (i === 11 ? "red" : "green"), 
+      adj: savedAdj ? JSON.parse(savedAdj) : []
+    };
+});
+
+let imData = [
+  { name: "Alex R.", tier: "T4", currentPoints: 125, dealsCount: 14, yellowRisk: 2, redRisk: 1, tz: "EST", isTerritory: true },
+  { name: "Jordan M.", tier: "T2", currentPoints: 65, dealsCount: 9, yellowRisk: 1, redRisk: 0, tz: "EST", isTerritory: true },
+  { name: "Casey S.", tier: "T3", currentPoints: 45, dealsCount: 10, yellowRisk: 0, redRisk: 0, tz: "EST", isTerritory: true },
+  { name: "Morgan L.", tier: "T1", currentPoints: 68, dealsCount: 11, yellowRisk: 2, redRisk: 1, tz: "EST", isTerritory: true },
+  { name: "Riley W.", tier: "T2", currentPoints: 88, dealsCount: 13, yellowRisk: 2, redRisk: 0, tz: "EST", isTerritory: true },
+  { name: "Skyler P.", tier: "T5", currentPoints: 40, dealsCount: 9, yellowRisk: 0, redRisk: 0, tz: "EST", isTerritory: true },
+  { name: "Taylor B.", tier: "T3", currentPoints: 115, dealsCount: 14, yellowRisk: 2, redRisk: 2, tz: "EST", isTerritory: true },
+  { name: "Quinn J.", tier: "T1", currentPoints: 30, dealsCount: 9, yellowRisk: 0, redRisk: 0, tz: "EST", isTerritory: true }
+];
+
+const extraTzs = ["CST", "PST"];
+for(let i=1; i<=15; i++) { imData.push({ name: `IM User ${i}`, tier: `T${Math.floor(Math.random()*4)+1}`, currentPoints: Math.floor(Math.random()*85), dealsCount: 10, yellowRisk: 1, redRisk: 0, tz: extraTzs[i % 2], isTerritory: false }); }
+
+let reviewQueue = [{ id: 101, name: "West Valley USD", size: "Strategic", sis: "PowerSchool", adj: [] }];
+
+function switchView(tabId) {
+  currentTab = tabId;
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('view-' + tabId).classList.add('active');
+  const navId = tabId.includes('team') ? 'team' : tabId.includes('territory') ? 'territory' : 'my';
+  document.getElementById('tab-' + navId).classList.add('active');
+  updateMetrics();
+  if (tabId === 'my-book') renderMyBook(); else renderTeamContent();
+  if (tabId === 'total-team') { renderReviewQueue(); renderOverloadReviews(); }
+}
+
+function updateMetrics() {
+  let deals = 0, points = 0, yellow = 0, red = 0, maxPts = 0;
+  
+  // Define scope based on tab and filter
+  let roster = [];
+  if (currentTab === 'my-book') {
+    myDeals.forEach(d => { points += (SIZE_PTS[d.size] + SIS_PTS[d.sis] + HEALTH_PTS[d.health] + d.adj.length); if (d.health === 'yellow') yellow++; if (d.health === 'red') red++; });
+    deals = 12; maxPts = 120; document.getElementById('tier-context').innerText = "(T3)";
+  } else {
+    // Determine which roster to use for Territory vs Team tab
+    let baseRoster = currentTab === 'territory' ? imData.filter(im => im.tz === "EST") : imData;
+    
+    // Apply dynamic time zone filter for Team tab
+    roster = (currentTab === 'total-team' && currentTZFilter !== 'all') 
+             ? baseRoster.filter(im => im.tz === currentTZFilter) 
+             : baseRoster;
+
+    roster.forEach(im => { deals += im.dealsCount; points += im.currentPoints; yellow += im.yellowRisk; red += im.redRisk; maxPts += MPC_VALUES[im.tier]; });
+    
+    // UI Label context
+    let label = "(Team Avg)";
+    if(currentTab === 'territory') label = "(EST Avg)";
+    else if(currentTZFilter !== 'all') label = `(${currentTZFilter} Avg)`;
+    document.getElementById('tier-context').innerText = label;
+  }
+  
+  const capPct = points > 0 ? Math.round((points / maxPts) * 100) : 0;
+  const color = capPct >= 90 ? 'var(--ps-red)' : (capPct >= 75 ? 'var(--ps-gold)' : 'var(--ps-green)');
+  
+  document.getElementById('stat-deals').innerText = deals; 
+  document.getElementById('stat-points').innerText = points;
+  document.getElementById('max-pts').innerText = maxPts; 
+  document.getElementById('stat-risk').innerText = yellow + red;
+  document.getElementById('risk-breakdown-text').innerText = `${yellow} Yellow / ${red} Red`;
+  document.getElementById('stat-cap').innerText = capPct + '%'; 
+  document.getElementById('summary-cap-fill').style.width = Math.min(capPct, 100) + '%';
+  document.getElementById('summary-cap-fill').style.background = color;
+}
+
+function renderTeamContent() {
+  const displayId = currentTab === 'territory' ? 'territory-display' : 'team-display';
+  const display = document.getElementById(displayId); if(!display) return;
+  display.innerHTML = '';
+  
+  let roster = currentTab === 'territory' ? imData.filter(im => im.tz === "EST") : [...imData];
+  if (currentTab === 'total-team' && currentTZFilter !== 'all') roster = roster.filter(im => im.tz === currentTZFilter);
+
+  document.querySelectorAll(`[id^="btn-grid"], [id^="btn-list"]`).forEach(b => b.classList.remove('active'));
+  const btnId = `btn-${currentLayout}-${currentTab.includes('team') ? 'team' : 'territory'}`;
+  if(document.getElementById(btnId)) document.getElementById(btnId).classList.add('active');
+
+  const sorted = roster.sort((a, b) => {
+      const tierA = parseInt(a.tier.replace('T', ''));
+      const tierB = parseInt(b.tier.replace('T', ''));
+      return tierSortDir === 'desc' ? tierB - tierA : tierA - tierB;
+  });
+
+  if (currentLayout === 'list') {
+    const table = document.createElement('table'); table.className = 'im-list-table';
+    table.innerHTML = `<thead><tr><th>TZ</th><th>Tier</th><th>IM Name</th><th>Points</th><th>% Cap</th><th>Deals</th><th>Risk</th>${currentTab==='total-team'?'<th>Assignment Rotation</th>':''}<th>Notes</th><th>Action</th></tr></thead><tbody></tbody>`;
+    display.appendChild(table);
+    sorted.forEach(im => {
+      const mpc = MPC_VALUES[im.tier], cap = Math.round((im.currentPoints/mpc)*100);
+      const isOver = cap >= 100; if(isOver) localStorage.setItem('rot_'+im.name, 'off');
+      const off = localStorage.getItem('rot_'+im.name) === 'off';
+      const color = cap >= 90 ? 'var(--ps-red)' : (cap >= 75 ? 'var(--ps-gold)' : 'var(--ps-green)');
+      table.querySelector('tbody').innerHTML += `<tr class="${isOver?'overload':''}" style="${off && !isOver ? 'opacity:0.5':''}">
+        <td>${im.tz}</td><td>${im.tier}</td><td><strong>${im.name}</strong></td><td>${im.currentPoints}/${mpc}</td><td><span class="status-dot" style="background:${color}"></span>${cap}%</td><td>${im.dealsCount}</td><td>${im.yellowRisk}Y/${im.redRisk}R</td>
+        ${currentTab==='total-team'?`<td><button class="btn-rotation ${off?'off':''}" onclick="tRot('${im.name}')">${off?'Off Rotation':'On Rotation'}</button></td>`:''}
+        <td><input type="text" class="list-note" value="${localStorage.getItem('note_'+im.name)||''}"></td><td><button class="btn-save" onclick="sNote('${im.name}',this)">Save</button></td></tr>`;
+    });
+  } else {
+    let currentTier = ""; let grid;
+    sorted.forEach(im => {
+      if (im.tier !== currentTier) {
+        currentTier = im.tier;
+        const h = document.createElement('div'); h.className = 'tier-section-header'; h.innerText = `Tier ${currentTier.replace('T','')}`;
+        display.appendChild(h); grid = document.createElement('div'); grid.className = 'im-grid'; display.appendChild(grid);
+      }
+      const mpc = MPC_VALUES[im.tier], cap = Math.round((im.currentPoints/mpc)*100);
+      const isOver = cap >= 100; const off = localStorage.getItem('rot_'+im.name) === 'off';
+      const color = cap >= 90 ? 'var(--ps-red)' : (cap >= 75 ? 'var(--ps-gold)' : 'var(--ps-green)');
+      grid.innerHTML += `<div class="im-card ${isOver?'overload':''} ${off && !isOver ? 'off-rotation':''}">
+        <div style="display:flex; justify-content:space-between; align-items:center;"><strong>${im.name} (${im.tz})</strong> ${currentTab==='total-team'?`<button class="btn-rotation ${off?'off':''}" onclick="tRot('${im.name}')">${off?'Off Rotation':'On Rotation'}</button>`:`<span class="pill green" style="font-size:9px;">${im.tier}</span>`}</div>
+        <div style="font-size:11px; margin:8px 0;">📋 Deals: ${im.dealsCount} | ⚠️ Risk: ${im.yellowRisk+im.redRisk} (${im.yellowRisk}Y/${im.redRisk}R)</div>
+        <div style="font-size:11px;">Points: <strong>${im.currentPoints}</strong> / ${mpc}</div>
+        <div class="capacity-container">
+          ${[25, 50, 75, 90].map(m => `<div class="marker-label" style="left:${m}%">${m}%</div><div class="marker" style="left:${m}%"></div>`).join('')}
+          <div class="progress-track"><div class="progress-fill" style="width:${Math.min(cap,100)}%; background:${color}"></div></div>
         </div>
+        <textarea placeholder="Notes...">${localStorage.getItem('n_'+im.name)||''}</textarea><button class="btn-save" onclick="sNote('${im.name}',this)" style="float:right;margin-top:5px;">Save</button></div>`;
+    });
+  }
+}
 
-    <div id="mainContent"></div>
+function setTZFilter(tz) {
+  currentTZFilter = tz;
+  document.querySelectorAll('[id^="filter-"]').forEach(b => b.classList.remove('active'));
+  document.getElementById('filter-' + tz.toLowerCase()).classList.add('active');
+  renderTeamContent();
+  updateMetrics();
+}
 
-    <footer>
-        <p>© 2025 ParentSquare • Implementation Manager Dashboard</p> </footer>
+function toggleTierSort() { tierSortDir = (tierSortDir === 'desc' ? 'asc' : 'desc'); renderTeamContent(); }
+function setLayout(m) { currentLayout = m; renderTeamContent(); }
+function calculateTotalPoints(deal) { return (SIZE_PTS[deal.size] || 0) + (SIS_PTS[deal.sis] || 0) + (HEALTH_PTS[deal.health] || 0) + deal.adj.length; }
 
-    <script>
-        // Simulated Database
-        const state = {
-            currentRole: 'ic',
-            deals: [
-                { id: 1, name: "Lincoln District", sis: "PowerSchool", health: "Blue", size: "Medium", points: 8, lead: "Alex R.", weekDeals: 2 },
-                { id: 2, name: "Westside Academy", sis: "Aeries", health: "Green", size: "Small", points: 3, lead: "Alex R.", weekDeals: 2 }
-            ],
-            projects: [
-                { id: 101, title: "Template Audit", role: "Lead", complexity: "Low", points: 3, endDate: "2026-03-15", status: "Overdue", owner: "Alex R." },
-                { id: 102, title: "Training Alignment", role: "Contributor", complexity: "Medium", points: 3, endDate: "2026-04-01", status: "In Progress", owner: "Alex R." }
-            ],
-            ims: [
-                { name: "Alex R.", team: "West", mpc: 20, mediumReady: true, velocity: 6 }
-            ]
-        };
+function renderMyBook() {
+  const body = document.getElementById('my-deals-body'); body.innerHTML = '';
+  myDeals.sort((a, b) => STAGES.indexOf(a.stage) - STAGES.indexOf(b.stage));
+  let currentStage = "";
+  myDeals.forEach(deal => {
+    if (deal.stage !== currentStage) {
+      if (currentStage !== "") body.innerHTML += `<tr class="stage-spacer"><td colspan="7"></td></tr>`;
+      body.innerHTML += `<tr><td colspan="7" class="stage-group-header">${deal.stage}</td></tr>`;
+      currentStage = deal.stage;
+    }
+    const pts = calculateTotalPoints(deal);
+    const isVertical = deal.adj.length > 2 ? 'vertical' : '';
+    body.innerHTML += `<tr><td>${deal.stage}</td><td><strong>${deal.name}</strong></td><td>${deal.size} (${SIZE_PTS[deal.size]})</td><td>${deal.sis} (${SIS_PTS[deal.sis]})</td><td><span class="pill ${deal.health}">${deal.health} (${HEALTH_PTS[deal.health]})</span></td>
+      <td><div class="adj-wrapper">
+        <div class="adj-display ${isVertical}">${deal.adj.map(a => `<span>${a} (+1)</span>`).join('')}</div>
+        <div class="adj-btn" onclick="toggleAdjMenu(${deal.id}, this)">Manage ▼</div>
+        <div class="adj-dropdown" id="adj-menu-${deal.id}">${ADJ_OPTIONS.map(opt => `<label style="display:block; margin-bottom:5px;"><input type="checkbox" ${deal.adj.includes(opt) ? 'checked' : ''} onchange="updateAdj(${deal.id}, '${opt}')"> ${opt} (+1)</label>`).join('')}</div>
+      </div></td>
+      <td><strong>${pts}</strong></td></tr>`;
+  });
+}
 
-        function calculatePoints(deal) {
-            let pts = 0;
-            // SIS cite: 265
-            if (deal.sis === "PowerSchool") pts += 3;
-            else if (deal.sis === "Aeries") pts += 2;
-            
-            // Size cite: 304
-            if (deal.size === "Medium") pts += 3;
-            else if (deal.size === "Small") pts += 1;
+function renderReviewQueue() {
+  const container = document.getElementById('review-container');
+  container.innerHTML = reviewQueue.map(item => {
+    const total = SIZE_PTS[item.size] + SIS_PTS[item.sis] + item.adj.length;
+    return `<div class="review-card" id="rev-${item.id}"><h3>Review Assignment: ${item.name}</h3>
+      <p style="font-size:12px;"><strong>Base:</strong> ${item.size} (${SIZE_PTS[item.size]}pts) + ${item.sis} (${SIS_PTS[item.sis]}pts)</p>
+      <div style="margin-bottom:15px;"><label style="font-size:11px; font-weight:700;">Add Deal Adjustments:</label><br>
+        <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-top:5px;">
+          ${ADJ_OPTIONS.map(opt => `<label style="font-size:10px;"><input type="checkbox" onchange="upRevPts(${item.id}, '${opt}')"> ${opt} (+1)</label>`).join('')}
+        </div>
+      </div>
+      <p style="font-size:13px; font-weight:700;">Projected Total Load: <span id="rev-tot-${item.id}">${total}</span> pts</p>
+      <label style="font-size:11px; font-weight:700;">Suggested IM Assignment:</label><br>
+      <select class="assign-select">${imData.filter(i=>localStorage.getItem('rot_'+i.name)!=='off').sort((a,b)=>b.tier.localeCompare(a.tier)).map(i=>`<option>${i.tier} - ${i.name} (${i.currentPoints}/${MPC_VALUES[i.tier]} pts - ${Math.round((i.currentPoints/MPC_VALUES[i.tier])*100)}%)</option>`).join('')}</select>
+      <div style="margin-top:15px;"><button class="btn-action active" onclick="finRev(${item.id}, true)">Approve & Assign</button> <button class="btn-action" onclick="finRev(${item.id}, false)">Hold Review</button></div></div>`;
+  }).join('');
+}
 
-            // Health cite: user prompt
-            if (deal.health === "Blue") pts += 2;
-            else if (deal.health === "Red") pts += 2;
-            
-            return pts;
-        }
+function renderOverloadReviews() {
+  const container = document.getElementById('overload-container');
+  const overloads = imData.filter(im => (im.currentPoints / MPC_VALUES[im.tier]) >= 1.0);
+  container.innerHTML = overloads.length ? overloads.map(im => `<div class="review-card" style="background:#fffaf0; border-left:6pt solid var(--ps-red);">
+    <p><strong>${im.name} (${im.tier})</strong> is at ${Math.round((im.currentPoints/MPC_VALUES[im.tier])*100)}% capacity. <strong>Auto-off rotation.</strong></p>
+    <button class="btn-action active" onclick="localStorage.setItem('rot_${im.name}','on'); switchView('total-team');">Manually Re-enable Rotation</button></div>`).join('') : '';
+  const count = overloads.length + reviewQueue.length;
+  document.getElementById('main-badge').innerText = count;
+  document.getElementById('sub-badge').innerText = count;
+}
 
-        function switchRole() {
-            state.currentRole = document.getElementById('roleSelect').value;
-            renderTabs();
-            renderContent('deals');
-        }
+function toggleAdjMenu(id, element) {
+  const menu = document.getElementById(`adj-menu-${id}`);
+  const rect = element.getBoundingClientRect();
+  menu.classList.remove('open-up');
+  if (window.innerHeight - rect.bottom < 250) menu.classList.add('open-up');
+  menu.classList.toggle('active');
+}
 
-        function renderTabs() {
-            const container = document.getElementById('navContainer');
-            let tabs = `<button class="tab-btn active" onclick="renderContent('deals')">My Deals</button>
-                        <button class="tab-btn" onclick="renderContent('projects')">My Projects</button>`;
-            
-            if (state.currentRole === 'lead' || state.currentRole === 'manager') {
-                tabs = `<button class="tab-btn active" onclick="renderContent('deals')">Team Deals</button>
-                        <button class="tab-btn" onclick="renderContent('projects')">Team Projects</button>
-                        <button class="tab-btn" onclick="renderContent('review')">Assignment Review</button>
-                        <button class="tab-btn" onclick="renderContent('data')">Data Tab</button>`;
-            }
-            container.innerHTML = tabs;
-        }
+function updateAdj(id, opt) { 
+  const d = myDeals.find(x => x.id === id); 
+  const idx = d.adj.indexOf(opt); 
+  idx > -1 ? d.adj.splice(idx, 1) : d.adj.push(opt);
+  localStorage.setItem(`adj_my_deal_${id}`, JSON.stringify(d.adj));
+  renderMyBook(); updateMetrics(); 
+}
 
-        function renderContent(view) {
-            const content = document.getElementById('mainContent');
-            
-            if (view === 'deals') {
-                let html = `<div class="card"><h2>${state.currentRole === 'ic' ? 'My' : 'Team'} Deals</h2><table>
-                    <tr><th>Deal Name</th><th>SIS</th><th>Health</th><th>Points</th><th>Actions</th></tr>`;
-                
-                state.deals.forEach(d => {
-                    const healthClass = `health-${d.health.toLowerCase()}`;
-                    html += `<tr>
-                        <td>${d.name}</td>
-                        <td>${d.sis}</td>
-                        <td><span class="status-pill ${healthClass}">${d.health}</span></td>
-                        <td>${d.points}</td>
-                        <td>${state.currentRole === 'ic' ? '<button>Add Adjustment</button>' : '<button>Edit Note</button>'}</td>
-                    </tr>`;
-                });
-                html += `</table></div>`;
-                content.innerHTML = html;
-            }
+function upRevPts(id, opt) { const item = reviewQueue.find(i => i.id === id); const idx = item.adj.indexOf(opt); idx > -1 ? item.adj.splice(idx, 1) : item.adj.push(opt); document.getElementById(`rev-tot-${id}`).innerText = SIZE_PTS[item.size] + SIS_PTS[item.sis] + item.adj.length; }
+function finRev(id, app) { if(app) { reviewQueue = reviewQueue.filter(i => i.id !== id); alert('Assigned.'); switchView('total-team'); } else { document.getElementById(`rev-${id}`).style.opacity = '0.5'; } }
+function switchSubTab(s) { document.getElementById('view-roster').style.display = s==='roster'?'block':'none'; document.getElementById('view-strat').style.display = s==='strat'?'block':'none'; document.getElementById('sub-team-roster').classList.toggle('active', s==='roster'); document.getElementById('sub-team-strat').classList.toggle('active', s==='strat'); }
+function tRot(n) { localStorage.setItem('rot_'+n, localStorage.getItem('rot_'+n)==='off'?'on':'off'); renderTeamContent(); updateMetrics(); }
+function sNote(n,e) { localStorage.setItem('n_'+n, e.parentElement.querySelector('textarea, input').value); e.innerText = 'Saved!'; setTimeout(()=>e.innerText='Save', 1000); }
 
-            if (view === 'review') {
-                content.innerHTML = `
-                    <div class="card">
-                        <h2>Assignment Review Queue</h2>
-                        <div class="velocity-alert"><strong>Velocity Warning:</strong> Alex R. has >5 deals this week. Removed from auto-rotation.</div>
-                        <table>
-                            <tr><th>IM Name</th><th>MPC</th><th>Medium-Ready</th><th>Current Load</th></tr>
-                            <tr>
-                                <td>Alex R.</td>
-                                <td>20</td>
-                                <td><input type="checkbox" checked></td>
-                                <td style="color:var(--warning-red)">17 (85%)</td>
-                            </tr>
-                        </table>
-                    </div>
-                `;
-            }
-
-            if (view === 'projects') {
-                let html = `<div class="card"><h2>Projects</h2><table>
-                    <tr><th>Project Title</th><th>Role</th><th>End Date</th><th>Points</th><th>Status</th></tr>`;
-                state.projects.forEach(p => {
-                    const statusStyle = p.status === 'Overdue' ? 'style="color:var(--ps-gold); font-weight:bold;"' : '';
-                    html += `<tr>
-                        <td>${p.title}</td>
-                        <td>${p.role}</td>
-                        <td>${p.endDate}</td>
-                        <td>${p.points}</td>
-                        <td ${statusStyle}>${p.status}</td>
-                    </tr>`;
-                });
-                html += `</table></div>`;
-                content.innerHTML = html;
-            }
-
-            if (view === 'data') {
-                content.innerHTML = `
-                    <div class="card">
-                        <h2>Historical Workload Capacity</h2>
-                        <p>High-level totals: Deals vs Projects</p>
-                        <div class="chart-container">
-                            <div class="bar" style="height: 60%;"><div class="bar-label">Q3 Deals</div></div>
-                            <div class="bar" style="height: 30%; background: var(--ps-blue);"><div class="bar-label">Q3 Proj</div></div>
-                            <div class="bar" style="height: 80%;"><div class="bar-label">Q4 Deals</div></div>
-                            <div class="bar" style="height: 45%; background: var(--ps-blue);"><div class="bar-label">Q4 Proj</div></div>
-                        </div>
-                    </div>
-                `;
-            }
-        }
-
-        // Initialize
-        switchRole();
-    </script>
+window.onclick = e => { if (!e.target.closest('.adj-wrapper')) document.querySelectorAll('.adj-dropdown').forEach(d => d.classList.remove('active')); };
+updateMetrics(); renderMyBook();
+</script>
 </body>
 </html>
