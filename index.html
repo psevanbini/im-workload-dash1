@@ -1,182 +1,235 @@
-<style>
-    :root {
-        --ps-green: #85ad33; /* cite: 112 */
-        --ps-dark-green: #618025; /* cite: 113 */
-        --ps-blue: #7bbaf0; /* cite: 114 */
-        --ps-gold: #f2b001; /* cite: 115 */
-        --ps-light-green: #e5f1d4; /* cite: 117 */
-        --ps-dark-gray: #444444; /* cite: 118 */
-        --ps-light-gray: #f7f8f8; /* cite: 119 */
-    }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ParentSquare IM Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ps-green: #85ad33; /* cite: 112 */
+            --ps-dark-green: #618025; /* cite: 113 */
+            --ps-blue: #7bbaf0; /* cite: 114 */
+            --ps-gold: #f2b001; /* cite: 115 */
+            --ps-light-green: #e5f1d4; /* cite: 117 */
+            --ps-dark-gray: #444444; /* cite: 118 */
+            --ps-light-gray: #f7f8f8; /* cite: 119 */
+        }
 
-    body {
-        font-family: 'Montserrat', Arial, sans-serif; /* cite: 40 */
-        background-color: var(--ps-light-gray);
-        color: var(--ps-dark-gray);
-        margin: 20px;
-    }
+        body {
+            font-family: 'Montserrat', sans-serif; /* cite: 40-43 */
+            background-color: var(--ps-light-gray);
+            color: var(--ps-dark-gray);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
 
-    /* Top Bar & Dropdown cite: user prompt */
-    .dashboard-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 3px solid var(--ps-green);
-        padding-bottom: 15px;
-        margin-bottom: 25px;
-    }
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid var(--ps-green);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
 
-    .dashboard-header h1 {
-        color: var(--ps-green);
-        font-size: 24pt; /* cite: 24 */
-        margin: 0;
-    }
+        .dashboard-header h1 {
+            color: var(--ps-green); /* cite: 23 */
+            font-size: 24pt; /* cite: 24 */
+            margin: 0;
+            font-weight: 700;
+        }
 
-    .view-selector {
-        padding: 10px;
-        font-family: 'Montserrat', sans-serif;
-        font-weight: 600;
-        border: 2px solid var(--ps-green);
-        border-radius: 5px;
-    }
+        .view-selector {
+            padding: 8px 12px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            border: 2px solid var(--ps-green);
+            border-radius: 5px;
+            cursor: pointer;
+        }
 
-    /* Alerts cite: user prompt */
-    .alert-container {
-        margin-bottom: 20px;
-    }
+        /* Warnings & Alerts */
+        .alert-box {
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            display: none;
+        }
+        .burnout { background: #f2dede; border-left: 6px solid #d9534f; color: #a94442; }
+        .velocity { background: var(--ps-light-green); border-left: 6px solid var(--ps-gold); color: var(--ps-dark-green); }
 
-    .burnout-warning {
-        background-color: #f2dede;
-        border-left: 6px solid #d9534f;
-        padding: 15px;
-        color: #a94442;
-        font-weight: bold;
-        display: none;
-    }
+        /* Tables */
+        .im-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+        .im-table th {
+            background-color: var(--ps-green); /* cite: 78 */
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-size: 13px;
+        }
+        .im-table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            font-size: 13px;
+        }
+        .total-col {
+            font-weight: 700;
+            background-color: #f9fdf4;
+            text-align: center;
+        }
 
-    /* Table Design cite: 74-80 */
-    .im-table {
-        width: 100%;
-        border-collapse: collapse;
-        background: white;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    }
+        /* Strategy Notes cite: 57, 64 */
+        .strategy-note {
+            background-color: var(--ps-light-green);
+            border-left: 6px solid var(--ps-green);
+            padding: 8px;
+            font-style: italic;
+            font-size: 11px;
+        }
 
-    .im-table th {
-        background-color: var(--ps-green);
-        color: white;
-        padding: 15px;
-        text-align: left;
-    }
+        /* Watermark Footer cite: 82-92, 146 */
+        .footer-watermark {
+            margin-top: auto;
+            text-align: center;
+            padding: 40px 0 20px 0;
+            font-size: 10pt;
+            color: #444444;
+            border-top: 1px solid #ddd;
+        }
+        .footer-watermark .creator {
+            display: block;
+            margin-top: 5px;
+            font-size: 8pt;
+            color: #888;
+        }
 
-    .im-table td {
-        padding: 15px;
-        border-bottom: 1px solid #eee;
-    }
+        button.adj-btn {
+            background: var(--ps-blue);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        button.adj-btn:disabled { background: #ccc; cursor: not-allowed; }
+    </style>
+</head>
+<body>
 
-    .im-table tr:hover {
-        background-color: #fcfcfc;
-    }
-
-    /* Strategy Notes cite: 51-65 */
-    .strategy-note {
-        background-color: var(--ps-light-green);
-        border-left: 6px solid var(--ps-green);
-        padding: 10px;
-        font-style: italic;
-        font-size: 0.9em;
-    }
-
-    .total-col {
-        font-weight: bold;
-        color: var(--ps-dark-green);
-        text-align: center;
-    }
-</style>
-
-<div class="dashboard-header">
-    <h1>IM Workload Dashboard</h1>
-    <select class="view-selector" id="roleSelector" onchange="toggleView()">
-        <option value="ic">View: Individual Contributor</option>
-        <option value="lead">View: Team Lead</option>
-        <option value="manager">View: Manager</option>
-    </select>
-</div>
-
-<div class="alert-container">
-    <div id="burnoutAlert" class="burnout-warning">
-        ⚠️ BURNOUT ALERT: Capacity > 90%. Velocity check required.
+    <div class="dashboard-header">
+        <h1>IM Workload Dashboard</h1>
+        <select class="view-selector" id="roleSelector" onchange="renderAll()">
+            <option value="ic">View: Individual Contributor</option>
+            <option value="lead">View: Team Lead</option>
+            <option value="manager">View: Manager</option>
+        </select>
     </div>
-</div>
 
-<div class="card">
-    <h2 id="tableTitle" style="color: var(--ps-dark-green);">Active Projects & Deals</h2>
-    <table class="im-table">
-        <thead>
-            <tr id="tableHeader">
-                </tr>
-        </thead>
-        <tbody id="tableBody">
-            </tbody>
-    </table>
-</div>
+    <div id="burnoutAlert" class="alert-box burnout">⚠️ BURNOUT WARNING: Total workload exceeds 90% capacity.</div>
+    <div id="velocityAlert" class="alert-box velocity">⚡ VELOCITY ALERT: Alex R. has >5 deals this week. Manual assignment required.</div>
 
-<script>
-    const mockData = {
-        projects: [
-            { name: "Template Audit", role: "Lead (2)", complexity: "Low (1)", detail: "Internal", date: "03/15/2026", total: 3, team: "West" },
-            { name: "Training Alignment", role: "Contributor (0)", complexity: "Medium (3)", detail: "Cross-Team", date: "04/01/2026", total: 3, team: "West" }
-        ],
-        deals: [
-            { name: "Lincoln District", sis: "PowerSchool (3)", health: "Blue (2)", size: "Medium (3)", date: "03/20/2026", total: 8, team: "West" },
-            { name: "Westside Academy", sis: "Aeries (2)", health: "Red (2)", size: "Small (1)", date: "03/22/2026", total: 5, team: "East" }
-        ]
-    };
+    <div id="mainContent">
+        </div>
 
-    function toggleView() {
-        const role = document.getElementById('roleSelector').value;
-        const header = document.getElementById('tableHeader');
-        const body = document.getElementById('tableBody');
-        const burnout = document.getElementById('burnoutAlert');
-        
-        // Reset
-        header.innerHTML = '';
-        body.innerHTML = '';
+    <footer class="footer-watermark">
+        <div>© 2025 ParentSquare • Implementation Manager Dashboard</div>
+        <div class="creator">Created for IM Dashboard Project • Derek McBride</div>
+    </footer>
 
-        // Determine Columns cite: user prompt
-        let cols = ["Name", "Role (Pts)", "Complexity (Pts)", "Type/Detail", "Date (MM/DD/YYYY)"];
-        if (role !== 'ic') cols.push("Strategy Notes");
-        cols.push("Point Total"); // Must be last
+    <script>
+        const state = {
+            deals: [
+                { id: 1, name: "Lincoln District", sis: "PowerSchool (3)", health: "Blue (2)", size: "Medium (3)", date: "03/20/2026", total: 8, team: "West", locked: false },
+                { id: 2, name: "Westside Academy", sis: "Aeries (2)", health: "Red (2)", size: "Small (1)", date: "03/22/2026", total: 5, team: "East", locked: true }
+            ],
+            projects: [
+                { id: 101, name: "Template Audit", role: "Lead (2)", type: "Internal (1)", comp: "Low (1)", date: "03/15/2026", total: 4, team: "West", status: "Overdue" }
+            ],
+            user: { name: "Alex R.", team: "West", dealsThisWeek: 6, mpc: 20 }
+        };
 
-        cols.forEach(c => {
-            let th = document.createElement('th');
-            th.innerText = c;
-            header.appendChild(th);
-        });
+        function renderAll() {
+            const role = document.getElementById('roleSelector').value;
+            const content = document.getElementById('mainContent');
+            content.innerHTML = '';
 
-        // Populate Projects (using MM/DD/YYYY format)
-        mockData.projects.forEach(p => {
-            if (role === 'lead' && p.team !== 'West') return;
+            // 1. Logic for Alerts
+            const totalPoints = state.deals.reduce((s, d) => s + d.total, 0) + state.projects.reduce((s, p) => s + p.total, 0);
+            document.getElementById('burnoutAlert').style.display = (totalPoints / state.user.mpc) >= 0.9 ? 'block' : 'none';
+            document.getElementById('velocityAlert').style.display = (role !== 'ic' && state.user.dealsThisWeek > 5) ? 'block' : 'none';
+
+            // 2. Render Tables
+            renderTable("Active Deals", state.deals, role);
+            renderTable("Strategic Projects", state.projects, role);
+
+            // 3. Render Data Tab for Leadership
+            if (role !== 'ic') {
+                content.innerHTML += `
+                    <div style="background:white; padding:20px; border-radius:5px; margin-top:20px;">
+                        <h3 style="color:var(--ps-dark-green)">Historical Workload: Deals vs. Projects</h3>
+                        <div style="display:flex; gap:15px; height:100px; align-items:flex-end; border-bottom:2px solid #ddd;">
+                            <div style="height:70%; width:40px; background:var(--ps-green);"></div>
+                            <div style="height:30%; width:40px; background:var(--ps-blue);"></div>
+                            <div style="font-size:10px; margin-left:10px;">(Team Average: 14.5 Pts)</div>
+                        </div>
+                    </div>`;
+            }
+        }
+
+        function renderTable(title, items, role) {
+            const container = document.getElementById('mainContent');
+            let tableHtml = `<h3>${title}</h3><table class="im-table"><thead><tr>`;
             
-            let tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><strong>${p.name}</strong></td>
-                <td>${p.role}</td>
-                <td>${p.complexity}</td>
-                <td>${p.detail}</td>
-                <td>${p.date}</td>
-                ${role !== 'ic' ? '<td><div class="strategy-note">Confidential: OKR 2026 Alignment</div></td>' : ''}
-                <td class="total-col">${p.total}</td>
-            `;
-            body.appendChild(tr);
-        });
+            let cols = ["Name", "Detail/Role", "Type (Pts)", "Comp/Health", "Date (MM/DD/YYYY)"];
+            if (role === 'ic') cols.push("Adjustments");
+            if (role !== 'ic') cols.push("Strategy Notes");
+            cols.push("Point Total"); // cite: user prompt
 
-        // Logic for Burnout Warning at 90%
-        const currentPoints = 19; // Simulated total
-        const mpc = 20;
-        burnout.style.display = (currentPoints / mpc) >= 0.9 ? 'block' : 'none';
-    }
+            cols.forEach(c => tableHtml += `<th>${c}</th>`);
+            tableHtml += `</tr></thead><tbody>`;
 
-    // Initialize
-    toggleView();
-</script>
+            items.forEach(item => {
+                if (role === 'lead' && item.team !== state.user.team) return;
+
+                const statusStyle = item.status === 'Overdue' ? 'style="color:var(--ps-gold); font-weight:bold;"' : '';
+                tableHtml += `
+                    <tr ${statusStyle}>
+                        <td><strong>${item.name}</strong></td>
+                        <td>${item.role || item.sis}</td>
+                        <td>${item.type || item.size}</td>
+                        <td>${item.comp || item.health}</td>
+                        <td>${item.date}</td>
+                        ${role === 'ic' ? `<td><button class="adj-btn" ${item.locked ? 'disabled' : ''} onclick="lockRow(${item.id})">${item.locked ? 'Locked' : 'Add Adjustment'}</button></td>` : ''}
+                        ${role !== 'ic' ? `<td><div class="strategy-note">Confidential Strategy: OKR 1.2</div></td>` : ''}
+                        <td class="total-col">${item.total}</td>
+                    </tr>`;
+            });
+
+            tableHtml += `</tbody></table>`;
+            container.innerHTML += tableHtml;
+        }
+
+        function lockRow(id) {
+            const deal = state.deals.find(d => d.id === id);
+            if (deal) {
+                deal.locked = true;
+                alert("Adjustment submitted and locked. Contact lead for further changes.");
+                renderAll();
+            }
+        }
+
+        renderAll();
+    </script>
+</body>
+</html>
