@@ -1,235 +1,166 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>ParentSquare IM Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --ps-green: #85ad33; /* cite: 112 */
-            --ps-dark-green: #618025; /* cite: 113 */
-            --ps-blue: #7bbaf0; /* cite: 114 */
-            --ps-gold: #f2b001; /* cite: 115 */
-            --ps-light-green: #e5f1d4; /* cite: 117 */
-            --ps-dark-gray: #444444; /* cite: 118 */
-            --ps-light-gray: #f7f8f8; /* cite: 119 */
-        }
+<style>
+    .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); border-top: 4px solid var(--ps-green); }
+    .card .value { font-size: 28px; font-weight: 700; color: var(--ps-dark-green); line-height: 1.1; }
+    .card .sub-value { font-size: 14px; font-weight: 600; color: #888; margin-top: 4px; display: block; }
+    .card .label { font-size: 13px; color: #666; margin-top: 8px; font-weight: 600; }
+    
+    /* Dual-color Progress Bar */
+    .summary-cap-bar { height: 10px; background: #eee; border-radius: 5px; margin-top: 12px; overflow: hidden; display: flex; }
+    #fill-deals { height: 100%; background: var(--ps-green); transition: width 0.5s; }
+    #fill-projects { height: 100%; background: var(--ps-blue); transition: width 0.5s; }
 
-        body {
-            font-family: 'Montserrat', sans-serif; /* cite: 40-43 */
-            background-color: var(--ps-light-gray);
-            color: var(--ps-dark-gray);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
+    table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; margin-bottom: 40px; }
+    th { background: var(--ps-green); color: white; padding: 14px; text-align: left; font-size: 12px; text-transform: uppercase; }
+    td { padding: 12px; border-bottom: 1px solid #eee; font-size: 12px; vertical-align: middle; }
+    
+    .section-title { color: var(--ps-dark-green); font-size: 18px; font-weight: 700; margin: 30px 0 15px 0; display: flex; align-items: center; gap: 10px; }
+    .stage-group-header { background: var(--ps-light-green); font-weight: 700; color: var(--ps-dark-green); padding: 8px 12px; font-size: 11px; text-transform: uppercase; }
+    
+    .pill { padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; display: inline-block; }
+    .blue-pill { background: #e3f2fd; color: #1976d2; border: 1px solid #bbdefb; }
+</style>
 
-        .dashboard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 3px solid var(--ps-green);
-            padding-bottom: 15px;
-            margin-bottom: 25px;
-        }
-
-        .dashboard-header h1 {
-            color: var(--ps-green); /* cite: 23 */
-            font-size: 24pt; /* cite: 24 */
-            margin: 0;
-            font-weight: 700;
-        }
-
-        .view-selector {
-            padding: 8px 12px;
-            font-family: 'Montserrat', sans-serif;
-            font-weight: 600;
-            border: 2px solid var(--ps-green);
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        /* Warnings & Alerts */
-        .alert-box {
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            font-weight: 600;
-            display: none;
-        }
-        .burnout { background: #f2dede; border-left: 6px solid #d9534f; color: #a94442; }
-        .velocity { background: var(--ps-light-green); border-left: 6px solid var(--ps-gold); color: var(--ps-dark-green); }
-
-        /* Tables */
-        .im-table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            margin-bottom: 30px;
-        }
-        .im-table th {
-            background-color: var(--ps-green); /* cite: 78 */
-            color: white;
-            padding: 12px;
-            text-align: left;
-            font-size: 13px;
-        }
-        .im-table td {
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-            font-size: 13px;
-        }
-        .total-col {
-            font-weight: 700;
-            background-color: #f9fdf4;
-            text-align: center;
-        }
-
-        /* Strategy Notes cite: 57, 64 */
-        .strategy-note {
-            background-color: var(--ps-light-green);
-            border-left: 6px solid var(--ps-green);
-            padding: 8px;
-            font-style: italic;
-            font-size: 11px;
-        }
-
-        /* Watermark Footer cite: 82-92, 146 */
-        .footer-watermark {
-            margin-top: auto;
-            text-align: center;
-            padding: 40px 0 20px 0;
-            font-size: 10pt;
-            color: #444444;
-            border-top: 1px solid #ddd;
-        }
-        .footer-watermark .creator {
-            display: block;
-            margin-top: 5px;
-            font-size: 8pt;
-            color: #888;
-        }
-
-        button.adj-btn {
-            background: var(--ps-blue);
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 11px;
-        }
-        button.adj-btn:disabled { background: #ccc; cursor: not-allowed; }
-    </style>
-</head>
-<body>
-
-    <div class="dashboard-header">
-        <h1>IM Workload Dashboard</h1>
-        <select class="view-selector" id="roleSelector" onchange="renderAll()">
-            <option value="ic">View: Individual Contributor</option>
-            <option value="lead">View: Team Lead</option>
-            <option value="manager">View: Manager</option>
-        </select>
+<div id="ic-dashboard-section">
+    <div class="summary">
+        <div class="card">
+            <div id="stat-deals" class="value">0</div>
+            <span class="sub-value" id="stat-projects-count">0 Projects</span>
+            <div class="label">Total Workload Items</div>
+        </div>
+        <div class="card">
+            <div class="value"><span id="stat-deal-pts">0</span> <span style="font-size: 14px; font-weight: 400;">Deal Pts</span></div>
+            <span class="sub-value" id="stat-proj-pts">0 Project Pts</span>
+            <div class="label">Total Points (Out of 120)</div>
+        </div>
+        <div class="card">
+            <div id="stat-cap" class="value">0%</div>
+            <div class="label">Capacity Used (T3)</div>
+            <div class="summary-cap-bar">
+                <div id="fill-deals" title="Deals"></div>
+                <div id="fill-projects" title="Projects"></div>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 8px; font-size: 9px; font-weight: 700;">
+                <span style="color: var(--ps-green)">● DEALS</span>
+                <span style="color: var(--ps-blue)">● PROJECTS</span>
+            </div>
+        </div>
+        <div class="card">
+            <div id="stat-risk" class="value">0</div>
+            <div class="label">At-Risk Deals</div>
+            <div id="risk-breakdown-text" style="font-size: 11px; color: #888; font-weight: 700;">0Y / 0R</div>
+        </div>
     </div>
 
-    <div id="burnoutAlert" class="alert-box burnout">⚠️ BURNOUT WARNING: Total workload exceeds 90% capacity.</div>
-    <div id="velocityAlert" class="alert-box velocity">⚡ VELOCITY ALERT: Alex R. has >5 deals this week. Manual assignment required.</div>
+    <div class="section-title">📊 Active Implementation Deals</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Stage</th>
+                <th>Customer</th>
+                <th>Size</th>
+                <th>SIS</th>
+                <th>Health</th>
+                <th>Adjustments</th>
+                <th>Total Points</th>
+            </tr>
+        </thead>
+        <tbody id="my-deals-body"></tbody>
+    </table>
 
-    <div id="mainContent">
-        </div>
+    <div class="section-title">🚀 Strategic Projects</div>
+    <table>
+        <thead>
+            <tr>
+                <th>Project Name</th>
+                <th>Role</th>
+                <th>Type</th>
+                <th>Complexity</th>
+                <th>End Date</th>
+                <th>Total Points</th>
+            </tr>
+        </thead>
+        <tbody id="my-projects-body"></tbody>
+    </table>
+</div>
 
-    <footer class="footer-watermark">
-        <div>© 2025 ParentSquare • Implementation Manager Dashboard</div>
-        <div class="creator">Created for IM Dashboard Project • Derek McBride</div>
-    </footer>
+<script>
+    // Configuration
+    const ROLE_PTS = { "Lead": 3, "Contributor": 1 };
+    const TYPE_PTS = { "Internal": 1, "Cross-Collaboration": 2 };
+    const COMP_PTS = { "Easy": 1, "Medium": 2, "Hard": 3 };
+    const MAX_CAPACITY = 120;
 
-    <script>
-        const state = {
-            deals: [
-                { id: 1, name: "Lincoln District", sis: "PowerSchool (3)", health: "Blue (2)", size: "Medium (3)", date: "03/20/2026", total: 8, team: "West", locked: false },
-                { id: 2, name: "Westside Academy", sis: "Aeries (2)", health: "Red (2)", size: "Small (1)", date: "03/22/2026", total: 5, team: "East", locked: true }
-            ],
-            projects: [
-                { id: 101, name: "Template Audit", role: "Lead (2)", type: "Internal (1)", comp: "Low (1)", date: "03/15/2026", total: 4, team: "West", status: "Overdue" }
-            ],
-            user: { name: "Alex R.", team: "West", dealsThisWeek: 6, mpc: 20 }
-        };
+    // Dummy Project Data (Initial Load)
+    let myProjects = [
+        { name: "Q1 Training Deck Update", role: "Lead", type: "Internal", complexity: "Medium", endDate: "03/31/2026" },
+        { name: "Product Feedback Loop", role: "Contributor", type: "Cross-Collaboration", complexity: "Hard", endDate: "04/15/2026" }
+    ];
 
-        function renderAll() {
-            const role = document.getElementById('roleSelector').value;
-            const content = document.getElementById('mainContent');
-            content.innerHTML = '';
+    function calculateProjectPoints(p) {
+        return ROLE_PTS[p.role] + TYPE_PTS[p.type] + COMP_PTS[p.complexity];
+    }
 
-            // 1. Logic for Alerts
-            const totalPoints = state.deals.reduce((s, d) => s + d.total, 0) + state.projects.reduce((s, p) => s + p.total, 0);
-            document.getElementById('burnoutAlert').style.display = (totalPoints / state.user.mpc) >= 0.9 ? 'block' : 'none';
-            document.getElementById('velocityAlert').style.display = (role !== 'ic' && state.user.dealsThisWeek > 5) ? 'block' : 'none';
+    function renderProjects() {
+        const body = document.getElementById('my-projects-body');
+        if (!body) return;
+        body.innerHTML = '';
 
-            // 2. Render Tables
-            renderTable("Active Deals", state.deals, role);
-            renderTable("Strategic Projects", state.projects, role);
+        myProjects.forEach(p => {
+            const pts = calculateProjectPoints(p);
+            body.innerHTML += `
+                <tr>
+                    <td><strong>${p.name}</strong></td>
+                    <td><span class="pill blue-pill">${p.role} (${ROLE_PTS[p.role]})</span></td>
+                    <td>${p.type} (${TYPE_PTS[p.type]})</td>
+                    <td>${p.complexity} (${COMP_PTS[p.complexity]})</td>
+                    <td>${p.endDate}</td>
+                    <td><strong>${pts}</strong></td>
+                </tr>`;
+        });
+    }
 
-            // 3. Render Data Tab for Leadership
-            if (role !== 'ic') {
-                content.innerHTML += `
-                    <div style="background:white; padding:20px; border-radius:5px; margin-top:20px;">
-                        <h3 style="color:var(--ps-dark-green)">Historical Workload: Deals vs. Projects</h3>
-                        <div style="display:flex; gap:15px; height:100px; align-items:flex-end; border-bottom:2px solid #ddd;">
-                            <div style="height:70%; width:40px; background:var(--ps-green);"></div>
-                            <div style="height:30%; width:40px; background:var(--ps-blue);"></div>
-                            <div style="font-size:10px; margin-left:10px;">(Team Average: 14.5 Pts)</div>
-                        </div>
-                    </div>`;
-            }
-        }
+    function updateICMetrics() {
+        // Calculate Deal Points
+        let dealPts = 0, yellow = 0, red = 0;
+        myDeals.forEach(d => {
+            dealPts += calculateDealPoints(d);
+            if (d.health === 'yellow') yellow++;
+            if (d.health === 'red') red++;
+        });
 
-        function renderTable(title, items, role) {
-            const container = document.getElementById('mainContent');
-            let tableHtml = `<h3>${title}</h3><table class="im-table"><thead><tr>`;
-            
-            let cols = ["Name", "Detail/Role", "Type (Pts)", "Comp/Health", "Date (MM/DD/YYYY)"];
-            if (role === 'ic') cols.push("Adjustments");
-            if (role !== 'ic') cols.push("Strategy Notes");
-            cols.push("Point Total"); // cite: user prompt
+        // Calculate Project Points
+        let projectPts = 0;
+        myProjects.forEach(p => {
+            projectPts += calculateProjectPoints(p);
+        });
 
-            cols.forEach(c => tableHtml += `<th>${c}</th>`);
-            tableHtml += `</tr></thead><tbody>`;
+        const totalPoints = dealPts + projectPts;
+        const capPct = Math.round((totalPoints / MAX_CAPACITY) * 100);
+        
+        // Update Cards
+        document.getElementById('stat-deals').innerText = myDeals.length;
+        document.getElementById('stat-projects-count').innerText = `${myProjects.length} Projects`;
+        
+        document.getElementById('stat-deal-pts').innerText = dealPts;
+        document.getElementById('stat-proj-pts').innerText = `${projectPts} Project Pts`;
+        
+        document.getElementById('stat-risk').innerText = yellow + red;
+        document.getElementById('risk-breakdown-text').innerText = `${yellow} Yellow / ${red} Red`;
+        
+        document.getElementById('stat-cap').innerText = capPct + '%';
 
-            items.forEach(item => {
-                if (role === 'lead' && item.team !== state.user.team) return;
+        // Update Dual Progress Bar
+        const dealWidth = (dealPts / MAX_CAPACITY) * 100;
+        const projectWidth = (projectPts / MAX_CAPACITY) * 100;
+        
+        document.getElementById('fill-deals').style.width = dealWidth + '%';
+        document.getElementById('fill-projects').style.width = projectWidth + '%';
+    }
 
-                const statusStyle = item.status === 'Overdue' ? 'style="color:var(--ps-gold); font-weight:bold;"' : '';
-                tableHtml += `
-                    <tr ${statusStyle}>
-                        <td><strong>${item.name}</strong></td>
-                        <td>${item.role || item.sis}</td>
-                        <td>${item.type || item.size}</td>
-                        <td>${item.comp || item.health}</td>
-                        <td>${item.date}</td>
-                        ${role === 'ic' ? `<td><button class="adj-btn" ${item.locked ? 'disabled' : ''} onclick="lockRow(${item.id})">${item.locked ? 'Locked' : 'Add Adjustment'}</button></td>` : ''}
-                        ${role !== 'ic' ? `<td><div class="strategy-note">Confidential Strategy: OKR 1.2</div></td>` : ''}
-                        <td class="total-col">${item.total}</td>
-                    </tr>`;
-            });
-
-            tableHtml += `</tbody></table>`;
-            container.innerHTML += tableHtml;
-        }
-
-        function lockRow(id) {
-            const deal = state.deals.find(d => d.id === id);
-            if (deal) {
-                deal.locked = true;
-                alert("Adjustment submitted and locked. Contact lead for further changes.");
-                renderAll();
-            }
-        }
-
-        renderAll();
-    </script>
-</body>
-</html>
+    // Initialize
+    document.getElementById('tab-my').innerText = "My Workload";
+    renderMyBook();
+    renderProjects();
+    updateICMetrics();
+</script>
