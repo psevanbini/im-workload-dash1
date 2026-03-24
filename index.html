@@ -7,6 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
+      /* Official ParentSquare Palette [cite: 110-119] */
       --ps-green: #85ad33;
       --ps-dark-green: #618025;
       --ps-blue: #7bbaf0;
@@ -15,15 +16,16 @@
       --ps-light-gray: #f7f8f8;
       --ps-dark-gray: #444444;
       --ps-red: #d9534f;
+      --ps-light-red: #f2dede;
     }
 
     * { box-sizing: border-box; font-family: "Montserrat", Arial, sans-serif; }
     body { margin: 0; background: var(--ps-light-gray); color: var(--ps-dark-gray); }
     .container { max-width: 1450px; margin: 0 auto; padding: 24px; }
 
-    /* Header & Logo [cite: 11, 12, 17, 24] */
+    /* Compact Header per Branding Kit [cite: 4-13] */
     header { display: flex; align-items: center; gap: 20px; margin-bottom: 30px; }
-    .logo img { height: 50px; width: auto; } 
+    .logo img { height: 45px; width: auto; } 
     .header-text h1 { color: var(--ps-green); margin: 0; font-size: 24px; font-weight: 700; line-height: 1.2; }
     .header-text p { margin: 4px 0 0; color: #666; font-size: 16px; font-weight: 600; }
 
@@ -46,12 +48,11 @@
 
     .section-header { color: var(--ps-dark-green); font-size: 18px; font-weight: 700; margin: 30px 0 15px 0; }
 
-    /* Branded Tables [cite: 78, 80] */
     table { width: 100%; border-collapse: collapse; background: white; border: 1px solid #ddd; border-radius: 8px; overflow: visible; margin-bottom: 30px; }
     th { background: var(--ps-green); color: white; padding: 14px; text-align: left; font-size: 11px; text-transform: uppercase; font-weight: 700; }
     td { padding: 12px; border-bottom: 1px solid #eee; font-size: 12px; vertical-align: middle; }
     
-    /* Stage Header  */
+    /* Shading applied only to Stage Headers [cite: 117] */
     .stage-group-header { background: var(--ps-light-green); font-weight: 700; color: var(--ps-dark-green); padding: 8px 12px; font-size: 11px; text-transform: uppercase; }
     .stage-spacer { height: 15px; background: var(--ps-light-gray); }
 
@@ -61,8 +62,9 @@
     .green { background: #dff0d8; color: #3c763d; border-color: #d6e9c6; }
 
     .adj-wrapper { position: relative; }
-    .adj-btn { background: #fff; border: 1px solid #ccc; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px; display: flex; justify-content: space-between; width: 100px; }
-    .adj-display { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 4px; font-size: 10px; font-weight: 600; color: var(--ps-blue); }
+    .adj-btn { background: #fff; border: 1px solid #ccc; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px; display: flex; justify-content: space-between; width: 100px; margin-bottom: 5px; }
+    /* Stacking logic for adjustments */
+    .adj-display { display: flex; flex-direction: column; gap: 4px; font-size: 10px; font-weight: 600; color: var(--ps-blue); }
     .adj-dropdown { display: none; position: absolute; left: 0; background: white; border: 1px solid #ddd; padding: 10px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 220px; border-radius: 4px; }
     .adj-dropdown.active { display: block; }
 
@@ -103,13 +105,16 @@
         <div class="label">Capacity Used (T3)</div>
     </div>
     <div class="card">
-        <div id="stat-risk-breakdown" class="main-val">0Y / 0R</div>
+        <div style="background-color: var(--ps-light-red); padding: 4px 10px; border-radius: 4px; display: inline-block; width: fit-content;">
+            <div id="stat-risk-total" class="main-val" style="font-size: 20px;">0 At-Risk Deals</div>
+        </div>
+        <div id="stat-risk-breakdown" class="sub-val" style="border-top: none; color: var(--ps-dark-gray);">0Y / 0R Breakdown</div>
         <div id="stat-past-due-proj" class="sub-val">0 Past Due Projects</div>
     </div>
   </div>
 
   <div id="view-my-book" class="view active">
-    <div class="section-header">Active Implementation Deals</div>
+    <div class="section-header">Implementation Deals</div>
     <table>
       <thead><tr><th>Stage</th><th>Customer</th><th>Size</th><th>SIS</th><th>Health</th><th>Adjustments</th><th>Total Points</th></tr></thead>
       <tbody id="my-deals-body"></tbody>
@@ -196,7 +201,8 @@ function updateMetrics() {
     document.getElementById('fill-deals').style.width = (dealPts / 120 * 100) + '%';
     document.getElementById('fill-projects').style.width = (projPts / 120 * 100) + '%';
 
-    document.getElementById('stat-risk-breakdown').innerText = `${yellow}Y / ${red}R`;
+    document.getElementById('stat-risk-total').innerText = `${yellow + red} At-Risk Deals`;
+    document.getElementById('stat-risk-breakdown').innerText = `${yellow}Y / ${red}R Breakdown`;
     document.getElementById('stat-past-due-proj').innerText = `${pastDue} Past Due Projects`;
 }
 
@@ -220,11 +226,11 @@ function renderMyBook() {
             <td><span class="pill ${deal.health}">${deal.health} (${HEALTH_PTS[deal.health]})</span></td>
             <td>
                 <div class="adj-wrapper">
-                    <div class="adj-display">${deal.adj.map(a => `<span>${a} (+1)</span>`).join('')}</div>
                     <div class="adj-btn" onclick="toggleAdj(${deal.id})">Manage ▼</div>
                     <div class="adj-dropdown" id="adj-menu-${deal.id}">
                         ${ADJ_OPTIONS.map(opt => `<label style="display:block; margin-bottom:5px;"><input type="checkbox" ${deal.adj.includes(opt)?'checked':''} onchange="updateAdj(${deal.id},'${opt}')"> ${opt} (+1)</label>`).join('')}
                     </div>
+                    <div class="adj-display">${deal.adj.map(a => `<span>${a} (+1)</span>`).join('')}</div>
                 </div>
             </td>
             <td><strong>${pts}</strong></td>
