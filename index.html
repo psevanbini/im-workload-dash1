@@ -9,163 +9,174 @@
         --ps-light-gray: #f7f8f8; /* cite: 119 */
     }
 
-    .project-dashboard {
-        font-family: 'Montserrat', sans-serif; /* cite: 40 */
-        max-width: 1200px;
-        margin: auto;
+    body {
+        font-family: 'Montserrat', Arial, sans-serif; /* cite: 40 */
+        background-color: var(--ps-light-gray);
+        color: var(--ps-dark-gray);
+        margin: 20px;
     }
 
-    /* Header & Branding cite: 4-13 */
-    .project-header {
-        border-bottom: 2px solid var(--ps-green);
-        padding-bottom: 10px;
-        margin-bottom: 20px;
+    /* Top Bar & Dropdown cite: user prompt */
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 3px solid var(--ps-green);
+        padding-bottom: 15px;
+        margin-bottom: 25px;
     }
 
-    .project-header h2 {
+    .dashboard-header h1 {
         color: var(--ps-green);
         font-size: 24pt; /* cite: 24 */
-        font-weight: bold;
+        margin: 0;
     }
 
-    /* Burnout Warning cite: user prompt */
-    .alert-banner {
-        padding: 15px;
-        border-radius: 5px;
-        margin-bottom: 20px;
+    .view-selector {
+        padding: 10px;
+        font-family: 'Montserrat', sans-serif;
         font-weight: 600;
-        display: none; /* Triggered by JS */
+        border: 2px solid var(--ps-green);
+        border-radius: 5px;
     }
 
-    .burnout-90 {
+    /* Alerts cite: user prompt */
+    .alert-container {
+        margin-bottom: 20px;
+    }
+
+    .burnout-warning {
         background-color: #f2dede;
         border-left: 6px solid #d9534f;
+        padding: 15px;
         color: #a94442;
+        font-weight: bold;
+        display: none;
     }
 
-    /* Table Styling cite: 74-80 */
-    .project-table {
+    /* Table Design cite: 74-80 */
+    .im-table {
         width: 100%;
         border-collapse: collapse;
         background: white;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
     }
 
-    .project-table th {
+    .im-table th {
         background-color: var(--ps-green);
         color: white;
-        padding: 12px;
+        padding: 15px;
         text-align: left;
     }
 
-    .project-table td {
-        padding: 12px;
-        border-bottom: 1px solid #ddd;
+    .im-table td {
+        padding: 15px;
+        border-bottom: 1px solid #eee;
     }
 
-    /* Status Indicators cite: user prompt */
-    .status-overdue {
-        color: var(--ps-gold);
-        font-weight: bold;
-        text-transform: uppercase;
+    .im-table tr:hover {
+        background-color: #fcfcfc;
     }
 
-    /* Strategy Callout cite: 51-65 */
+    /* Strategy Notes cite: 51-65 */
     .strategy-note {
         background-color: var(--ps-light-green);
         border-left: 6px solid var(--ps-green);
         padding: 10px;
-        margin-top: 5px;
-        font-size: 0.9em;
         font-style: italic;
+        font-size: 0.9em;
+    }
+
+    .total-col {
+        font-weight: bold;
+        color: var(--ps-dark-green);
+        text-align: center;
     }
 </style>
 
-<div class="project-dashboard">
-    <div class="project-header">
-        <h2>Project Management & Workload</h2>
-        <div id="burnoutAlert" class="alert-banner burnout-90">
-            ⚠️ BURNOUT WARNING: Capacity exceeds 90%. Assignment rotation paused.
-        </div>
-    </div>
+<div class="dashboard-header">
+    <h1>IM Workload Dashboard</h1>
+    <select class="view-selector" id="roleSelector" onchange="toggleView()">
+        <option value="ic">View: Individual Contributor</option>
+        <option value="lead">View: Team Lead</option>
+        <option value="manager">View: Manager</option>
+    </select>
+</div>
 
-    <div class="tabs" style="margin-bottom: 20px;">
-        <button onclick="updateProjectView('ic')" class="tab-btn">IC View</button>
-        <button onclick="updateProjectView('lead')" class="tab-btn">Lead View</button>
-        <button onclick="updateProjectView('manager')" class="tab-btn">Manager View</button>
-    </div>
-
-    <div class="card">
-        <table class="project-table">
-            <thead>
-                <tr>
-                    <th>Project Name</th>
-                    <th>Role</th>
-                    <th>Complexity</th>
-                    <th>Points</th>
-                    <th>End Date</th>
-                    <th id="leadHeader" style="display:none;">Strategy Notes</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody id="projectBody">
-                </tbody>
-        </table>
-    </div>
-
-    <div id="historicalSection" style="display:none; margin-top:30px;">
-        <div class="project-header">
-            <h3>Historical Data: Projects vs. Deals</h3>
-        </div>
-        <div style="display:flex; gap:20px; height:150px; align-items:flex-end; background:#eee; padding:20px;">
-            <div style="height:70%; width:50px; background:var(--ps-green); position:relative;"><span style="position:absolute; bottom:-20px; font-size:10px;">Deals</span></div>
-            <div style="height:40%; width:50px; background:var(--ps-blue); position:relative;"><span style="position:absolute; bottom:-20px; font-size:10px;">Projects</span></div>
-        </div>
+<div class="alert-container">
+    <div id="burnoutAlert" class="burnout-warning">
+        ⚠️ BURNOUT ALERT: Capacity > 90%. Velocity check required.
     </div>
 </div>
 
+<div class="card">
+    <h2 id="tableTitle" style="color: var(--ps-dark-green);">Active Projects & Deals</h2>
+    <table class="im-table">
+        <thead>
+            <tr id="tableHeader">
+                </tr>
+        </thead>
+        <tbody id="tableBody">
+            </tbody>
+    </table>
+</div>
+
 <script>
-    const projectData = [
-        { name: "Template Audit", role: "Lead", complexity: "Low", points: 3, end: "2026-03-20", status: "Overdue", team: "West" },
-        { name: "Training Alignment", role: "Contributor", complexity: "Medium", points: 3, end: "2026-04-15", status: "In Progress", team: "West" },
-        { name: "OKR Strategy Build", role: "Lead", complexity: "High", points: 7, end: "2026-05-01", status: "Green Light", team: "East" }
-    ];
+    const mockData = {
+        projects: [
+            { name: "Template Audit", role: "Lead (2)", complexity: "Low (1)", detail: "Internal", date: "03/15/2026", total: 3, team: "West" },
+            { name: "Training Alignment", role: "Contributor (0)", complexity: "Medium (3)", detail: "Cross-Team", date: "04/01/2026", total: 3, team: "West" }
+        ],
+        deals: [
+            { name: "Lincoln District", sis: "PowerSchool (3)", health: "Blue (2)", size: "Medium (3)", date: "03/20/2026", total: 8, team: "West" },
+            { name: "Westside Academy", sis: "Aeries (2)", health: "Red (2)", size: "Small (1)", date: "03/22/2026", total: 5, team: "East" }
+        ]
+    };
 
-    function updateProjectView(role) {
-        const body = document.getElementById('projectBody');
-        const alert = document.getElementById('burnoutAlert');
-        const history = document.getElementById('historicalSection');
-        const leadHeader = document.getElementById('leadHeader');
+    function toggleView() {
+        const role = document.getElementById('roleSelector').value;
+        const header = document.getElementById('tableHeader');
+        const body = document.getElementById('tableBody');
+        const burnout = document.getElementById('burnoutAlert');
         
+        // Reset
+        header.innerHTML = '';
         body.innerHTML = '';
-        
-        // Burnout Logic: If points > 18 (Assuming 20 is MPC) cite: user prompt
-        const totalPoints = projectData.reduce((sum, p) => sum + p.points, 0);
-        alert.style.display = totalPoints >= 18 ? 'block' : 'none';
 
-        projectData.forEach(p => {
-            // Role Filter cite: user prompt
+        // Determine Columns cite: user prompt
+        let cols = ["Name", "Role (Pts)", "Complexity (Pts)", "Type/Detail", "Date (MM/DD/YYYY)"];
+        if (role !== 'ic') cols.push("Strategy Notes");
+        cols.push("Point Total"); // Must be last
+
+        cols.forEach(c => {
+            let th = document.createElement('th');
+            th.innerText = c;
+            header.appendChild(th);
+        });
+
+        // Populate Projects (using MM/DD/YYYY format)
+        mockData.projects.forEach(p => {
             if (role === 'lead' && p.team !== 'West') return;
-
-            const row = document.createElement('tr');
-            const statusClass = p.status === 'Overdue' ? 'class="status-overdue"' : '';
             
-            row.innerHTML = `
+            let tr = document.createElement('tr');
+            tr.innerHTML = `
                 <td><strong>${p.name}</strong></td>
                 <td>${p.role}</td>
                 <td>${p.complexity}</td>
-                <td>${p.points}</td>
-                <td>${p.end}</td>
-                ${role !== 'ic' ? `<td><div class="strategy-note">Confidential: Resource for Q2 expansion.</div></td>` : ''}
-                <td ${statusClass}>${p.status}</td>
+                <td>${p.detail}</td>
+                <td>${p.date}</td>
+                ${role !== 'ic' ? '<td><div class="strategy-note">Confidential: OKR 2026 Alignment</div></td>' : ''}
+                <td class="total-col">${p.total}</td>
             `;
-            body.appendChild(row);
+            body.appendChild(tr);
         });
 
-        // Toggle elements based on role
-        leadHeader.style.display = role === 'ic' ? 'none' : 'table-cell';
-        history.style.display = role === 'ic' ? 'none' : 'block';
+        // Logic for Burnout Warning at 90%
+        const currentPoints = 19; // Simulated total
+        const mpc = 20;
+        burnout.style.display = (currentPoints / mpc) >= 0.9 ? 'block' : 'none';
     }
 
-    // Default to IC View
-    updateProjectView('ic');
+    // Initialize
+    toggleView();
 </script>
